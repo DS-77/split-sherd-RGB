@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/bw_images" />
+      <excludeFolder url="file://$MODULE_DIR$/depth" />
+      <excludeFolder url="file://$MODULE_DIR$/Misc Files" />
+      <excludeFolder url="file://$MODULE_DIR$/output" />
+      <excludeFolder url="file://$MODULE_DIR$/results" />
+      <excludeFolder url="file://$MODULE_DIR$/results2" />
+      <excludeFolder url="file://$MODULE_DIR$/rgb" />
+      <excludeFolder url="file://$MODULE_DIR$/usf_contours" />
+      <excludeFolder url="file://$MODULE_DIR$/usf_sherd_rgb" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

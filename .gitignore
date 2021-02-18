@@ -7,5 +7,7 @@ bw_images/
 usf_sherd_rgb/
 Misc Files/
 usf_contours/
-
+.gitignore
+__pycache__
+.idea
 .DS_Store
