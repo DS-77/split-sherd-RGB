@@ -1,12 +1,7 @@
 depth/
-results/
-results2/
 rgb/
 output/
-bw_images/
-usf_sherd_rgb/
 Misc Files/
-usf_contours/
 .gitignore
 __pycache__
 .idea
