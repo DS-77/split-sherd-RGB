@@ -112,11 +112,14 @@ def create_result(sherd_img, depth_img, card_img=None):
     """
 
     h, w, _ = sherd_img.shape
+    ratio = 2
 
-    if depth_img.shape[0] > depth_img.shape[1]:
-        depth_img = cv.resize(depth_img, (h, w))
-    else:
-        depth_img = cv.resize(depth_img, (w, h))
+    # if depth_img.shape[0] > depth_img.shape[1] and h > w:
+    #     depth_img = cv.resize(depth_img, (w, h))
+    # else:
+    #     depth_img = cv.resize(depth_img, (h, w))
+
+    depth_img = cv.resize(depth_img, (depth_img.shape[1]*ratio, depth_img.shape[0]*ratio))
 
     padding = 100
 
@@ -126,7 +129,7 @@ def create_result(sherd_img, depth_img, card_img=None):
     rr, rc, _ = RGB_B.shape
     dr, dc, _ = depth_B.shape
 
-    height, width = rr + 2 * int(dr / 4), rc + dc
+    height, width = rr + dr, rc + dc
 
     new_img = np.zeros((height, width, 3), dtype=np.uint8)
 
