@@ -8,8 +8,8 @@ import cv2 as cv
 import numpy as np
 import re
 
+
 # TODO: Rotate the sherd to orientation of depth image.
-# TODO: Resize the depth image to the same ratio of the cropped RGB image
 # TODO: Optimize code to run better. (Create functions for redundant code)
 # TODO: Clean up code. (Remove all log statements and irrelevant comments)
 # TODO: Blackout background not enclosed by sherd contour (makes image crops look better)
@@ -81,6 +81,7 @@ def crop(img, contours, dir="", name=" ", num=-1):
     """ This function crops the image based on the given contours
 
     Args:
+        dir: string name of the directory to store the image
         img: the RGB image to crop from
         contours: the sherd contours
         name: the name of the file
@@ -90,7 +91,6 @@ def crop(img, contours, dir="", name=" ", num=-1):
     new_img = img[y:y + h, x:x + w]
 
     if name != " ":
-        # cv.imwrite(f'output/' + dir + '/' + name + str(num) + '.png', new_img)
         cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num)}_.png', new_img)
     else:
         rect = cv.minAreaRect(contours)
@@ -110,6 +110,14 @@ def create_result(sherd_img, depth_img, card_img=None):
         depth_img: depth image
         card_img: cropped measure card
     """
+
+    h, w, _ = sherd_img.shape
+
+    if depth_img.shape[0] > depth_img.shape[1]:
+        depth_img = cv.resize(depth_img, (h, w))
+    else:
+        depth_img = cv.resize(depth_img, (w, h))
+
     padding = 100
 
     RGB_B = cv.copyMakeBorder(sherd_img, padding, padding, padding, padding, cv.BORDER_CONSTANT, value=(0, 0, 0))
@@ -118,7 +126,7 @@ def create_result(sherd_img, depth_img, card_img=None):
     rr, rc, _ = RGB_B.shape
     dr, dc, _ = depth_B.shape
 
-    height, width = rr + dr, rc + dc
+    height, width = rr + 2 * int(dr / 4), rc + dc
 
     new_img = np.zeros((height, width, 3), dtype=np.uint8)
 
@@ -126,20 +134,19 @@ def create_result(sherd_img, depth_img, card_img=None):
     new_img[0:dr, rc:rc + dc, :] = depth_B
 
     if card_img is not None:
-        card_B = cv.copyMakeBorder(card_img, padding, padding, padding, padding, cv.BORDER_CONSTANT, value=(0, 0, 0))
-        cr, cc, _ = card_B.shape
+        cr, cc, _ = card_img.shape
         nr, nc, _ = new_img.shape
 
         height, width = nr + cr, nc + cc
 
         card_start_h = max(rr, dr)
         card_start_w = int((width - cc) / 2)
-        sherd_start = int((width - nc)/2)
+        sherd_start = int((width - nc) / 2)
 
         result = np.zeros((height, width, 3), dtype=np.uint8)
 
-        result[0:nr, sherd_start:sherd_start+nc, :] = new_img
-        result[card_start_h:cr + card_start_h, card_start_w:cc + card_start_w, :] = card_B
+        result[0:nr, sherd_start:sherd_start + nc, :] = new_img
+        result[card_start_h:cr + card_start_h, card_start_w:cc + card_start_w, :] = card_img
 
         return result
 
