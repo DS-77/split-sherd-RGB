@@ -9,7 +9,6 @@ import numpy as np
 import re
 
 
-# TODO: Rotate the sherd to orientation of depth image.
 # TODO: Optimize code to run better. (Create functions for redundant code)
 # TODO: Clean up code. (Remove all log statements and irrelevant comments)
 # TODO: Blackout background not enclosed by sherd contour (makes image crops look better)
@@ -18,8 +17,8 @@ import re
 
 # Helper Functions
 def first_agr(tup):
-    """ This function returns the first element in the given tuple.
-
+    """
+    This function returns the first element in the given tuple.
     Args:
         tup: the specified tuple.
     """
@@ -27,8 +26,8 @@ def first_agr(tup):
 
 
 def contour_match(rbg_contours, depth_contours):
-    """ This function maps the RGB contours to depth images using the shape matching method to compare   contours.
-
+    """
+    This function maps the RGB contours to depth images using the shape matching method to compare   contours.
     Args:
         rbg_contours: the contours from the rgb image
         depth_contours: the contours from the depth image
@@ -53,8 +52,8 @@ def contour_match(rbg_contours, depth_contours):
 
 
 def rotate_image(img, theta):
-    """ This function rotates the given image to the given angle. (Doesn't work just yet)
-
+    """
+    This function rotates the given image to the given angle.
     Args:
         img: the image to be rotated
         theta: the angle (in degree) to rotate the image
@@ -78,8 +77,8 @@ def rotate_image(img, theta):
 
 
 def crop(img, contours, dir="", name=" ", num=-1):
-    """ This function crops the image based on the given contours
-
+    """
+    This function crops the image based on the given contours
     Args:
         dir: string name of the directory to store the image
         img: the RGB image to crop from
@@ -93,12 +92,12 @@ def crop(img, contours, dir="", name=" ", num=-1):
     if name != " ":
         cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num)}_.png', new_img)
     else:
-        rect = cv.minAreaRect(contours)
-        theta = 90 - rect[2]
-        new_img = rotate_image(new_img, 0)
+        (x, y), (Ma, ma), angle = cv.fitEllipse(contours)
+        theta = angle - 90
+        new_img = rotate_image(new_img, theta)
 
         # TEST LOG
-        # print("Card Angle: ", rect[2])
+        # print(f'Card Angle: {angle} ')
     return new_img
 
 
@@ -322,8 +321,14 @@ for fileIndex in range(len(Files)):
         some_img = cv.imread(input_file)
         rot_img = cv.rotate(some_img, cv.ROTATE_180)
 
+        # Retrieves the angle need to rotate the RGB image
+        (x1, y1), (Ma1, ma1), d_angle = cv.fitEllipse(results[r][3])
+        (x2, y2), (Ma2, ma2), rgb_angle = cv.fitEllipse(results[r][0])
+        theta = rgb_angle - d_angle
+
         # Retrieves the cropped image of the Sherd
         result_img_rgb = crop(rot_img, results[r][0], sherd_id, Files[fileIndex], r)
+        result_img_rgb = rotate_image(result_img_rgb, theta)
         result_img_dp = cv.imread(f'depth/{results[r][1]}')
         card_img = crop(rot_img, card)
 
