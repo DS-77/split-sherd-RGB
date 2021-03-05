@@ -27,7 +27,7 @@ def first_agr(tup):
 
 def contour_match(rbg_contours, depth_contours):
     """
-    This function maps the RGB contours to depth images using the shape matching method to compare   contours.
+    This function maps the RGB contours to depth images using the shape matching method to compare contours.
     Args:
         rbg_contours: the contours from the rgb image
         depth_contours: the contours from the depth image
@@ -76,10 +76,11 @@ def rotate_image(img, theta):
     return result
 
 
-def crop(img, contours, dir="", name=" ", num=-1):
+def crop(img, contours, dir="", name=" ", end="", num=-1):
     """
     This function crops the image based on the given contours
     Args:
+        end: Ending for the segmented image
         dir: string name of the directory to store the image
         img: the RGB image to crop from
         contours: the sherd contours
@@ -90,7 +91,10 @@ def crop(img, contours, dir="", name=" ", num=-1):
     new_img = img[y:y + h, x:x + w]
 
     if name != " ":
-        cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num)}_.png', new_img)
+        if ending:
+            cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num + 1)}_{end}.png', new_img)
+        else:
+            cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num + 1)}.png', new_img)
     else:
         (x, y), (Ma, ma), angle = cv.fitEllipse(contours)
         theta = angle - 90
@@ -101,58 +105,33 @@ def crop(img, contours, dir="", name=" ", num=-1):
     return new_img
 
 
-def create_result(sherd_img, depth_img, card_img=None):
+def create_result(sherd_img, card_img=None):
     """ This function creates the final image containing the cropped rgb, depth and measurement card.
 
     Args:
         sherd_img: cropped Sherd image
-        depth_img: depth image
         card_img: cropped measure card
     """
-
-    h, w, _ = sherd_img.shape
-    ratio = 2
-
-    # if depth_img.shape[0] > depth_img.shape[1] and h > w:
-    #     depth_img = cv.resize(depth_img, (w, h))
-    # else:
-    #     depth_img = cv.resize(depth_img, (h, w))
-
-    depth_img = cv.resize(depth_img, (depth_img.shape[1] * ratio, depth_img.shape[0] * ratio))
 
     padding = 100
 
     RGB_B = cv.copyMakeBorder(sherd_img, padding, padding, padding, padding, cv.BORDER_CONSTANT, value=(0, 0, 0))
-    depth_B = cv.copyMakeBorder(depth_img, padding, padding, padding, padding, cv.BORDER_CONSTANT, value=(0, 0, 0))
 
     rr, rc, _ = RGB_B.shape
-    dr, dc, _ = depth_B.shape
+    cr, cc, _ = card_img.shape
 
-    height, width = rr + dr, rc + dc
+    height, width = rr + cr, rc + cc
 
-    new_img = np.zeros((height, width, 3), dtype=np.uint8)
+    card_start_h = rr
+    card_start_w = int((width - cc) / 2)
+    sherd_start = int((width - rc) / 2)
 
-    new_img[0:rr, 0:rc, :] = RGB_B
-    new_img[0:dr, rc:rc + dc, :] = depth_B
+    result = np.zeros((height, width, 3), dtype=np.uint8)
 
-    if card_img is not None:
-        cr, cc, _ = card_img.shape
-        nr, nc, _ = new_img.shape
+    result[0:rr, sherd_start:sherd_start + rc, :] = RGB_B
+    result[card_start_h:cr + card_start_h, card_start_w:cc + card_start_w, :] = card_img
 
-        height, width = nr + cr, nc + cc
-
-        card_start_h = max(rr, dr)
-        card_start_w = int((width - cc) / 2)
-        sherd_start = int((width - nc) / 2)
-
-        result = np.zeros((height, width, 3), dtype=np.uint8)
-
-        result[0:nr, sherd_start:sherd_start + nc, :] = new_img
-        result[card_start_h:cr + card_start_h, card_start_w:cc + card_start_w, :] = card_img
-
-        return result
-
-    return new_img
+    return result
 
 
 # Keeps track of files that produce error
@@ -170,6 +149,13 @@ Files.sort()
 
 for fileIndex in range(len(Files)):
     # Retrieves the sherd's ID from the filename.
+    ending = ""
+
+    if 'ext' in Files[fileIndex]:
+        ending = 'ext'
+    elif 'int' in Files[fileIndex]:
+        ending = 'int'
+
     sherd_id = get_id.findall(Files[fileIndex])[0]
     sherd_id = sherd_id.lstrip('0')
 
@@ -279,9 +265,6 @@ for fileIndex in range(len(Files)):
         if re.search(sherd_id, file):
             depth_files.append(file)
 
-        if len(depth_files) == len(final_contours):
-            break
-
     # TEST LOG
     # print("Depth Num: ", len(depth_files))
 
@@ -312,7 +295,7 @@ for fileIndex in range(len(Files)):
         [dp_threshold, DPBW] = cv.threshold(cv.cvtColor(dp, cv.COLOR_BGR2GRAY), 15, 255, cv.THRESH_BINARY)
 
         # Finds depth contour.
-        [dp_temp_contours, dp_hierarchy] = cv.findContours(DPBW, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
+        [dp_temp_contours, dp_hierarchy] = cv.findContours(DPBW, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
         # Sort contours
         dp_temp_contours = sorted(dp_temp_contours, key=cv.contourArea, reverse=True)
@@ -323,15 +306,6 @@ for fileIndex in range(len(Files)):
         # TEST LOG
         # print("Depth Contour Area: ", cv.contourArea(dp_final_contour))
         dp_contours.append((dp_final_contour, depth_files[x]))
-
-        for c in range(len(dp_temp_contours)):
-            if cv.contourArea(dp_temp_contours[c]) > 100000:
-                dp_final_contour = dp_temp_contours[c]
-
-                # TEST LOG
-                # print("Depth Area: ", cv.contourArea(dp_final_contour))
-
-        dp_contImage = cv.drawContours(dp, dp_temp_contours, 0, (0, 0, 255), 5, cv.FILLED)
 
     # TEST LOG
     # print("Processed Depths: ", len(dp_contours))
@@ -349,7 +323,7 @@ for fileIndex in range(len(Files)):
         theta = rgb_angle - d_angle
 
         # Retrieves the cropped image of the Sherd
-        result_img_rgb = crop(rot_img, results[r][0], sherd_id, Files[fileIndex], r)
+        result_img_rgb = crop(rot_img, results[r][0], sherd_id, Files[fileIndex], ending, num=r)
         result_img_rgb = rotate_image(result_img_rgb, theta)
         result_img_dp = cv.imread(f'depth/{results[r][1]}')
         card_img = crop(rot_img, card)
