@@ -4,5 +4,6 @@ output/
 Misc Files/
 .gitignore
 __pycache__
+test.py
 .idea
 .DS_Store

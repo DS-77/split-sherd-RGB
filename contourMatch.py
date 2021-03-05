@@ -118,7 +118,7 @@ def create_result(sherd_img, depth_img, card_img=None):
     # else:
     #     depth_img = cv.resize(depth_img, (h, w))
 
-    depth_img = cv.resize(depth_img, (depth_img.shape[1]*ratio, depth_img.shape[0]*ratio))
+    depth_img = cv.resize(depth_img, (depth_img.shape[1] * ratio, depth_img.shape[0] * ratio))
 
     padding = 100
 
@@ -187,37 +187,59 @@ for fileIndex in range(len(Files)):
     blur_img = cv.GaussianBlur(A_rotate, (31, 31), 0)
 
     # Converts the image to a binary image.
-    # May need to modify threshold
     [threshold, BW] = cv.threshold(cv.cvtColor(blur_img, cv.COLOR_BGR2GRAY), 25, 255, cv.THRESH_BINARY)
 
     # Contours is a Python list of all the contours in the image. Each individual contour is a Numpy 
     # array of (x,y) coordinates of boundary points of the object.
 
+    # Mask used to block out non-sherd contours.
+    mask = np.zeros(A_rotate.shape, np.uint8)
+
+    # Quadrilateral shape detection
+    t_conts, hierarchy = cv.findContours(BW, cv.RETR_CCOMP, cv.CHAIN_APPROX_NONE)
+
+    # Holds the contours of non-sherd shapes
+    square_cont = []
+
+    # The measurement scale card
+    card = None
+
+    # Checks each contours' area, arc-length and number of vertices.
+    for cnt in t_conts:
+        area = cv.contourArea(cnt)
+
+        if area > 10000:
+            per = cv.arcLength(cnt, True)
+            approx = cv.approxPolyDP(cnt, 0.01 * per, True)
+
+            if len(approx) == 4:
+
+                if 940000.0 > area > 860000.0:
+                    card = cnt
+
+                square_cont.append(cnt)
+
+    if len(square_cont) > 0:
+        cv.drawContours(mask, square_cont, -1, (255, 255, 255), cv.FILLED)
+
+    # Mask with quadrilaterals blocked out.
+    block_out = cv.bitwise_and(A_rotate, mask)
+
+    # Creates new binary image with out non-sherd shapes.
+    BW = cv.cvtColor(BW, cv.COLOR_GRAY2BGR)
+    combine = cv.subtract(BW, mask)
+    combine = cv.cvtColor(combine, cv.COLOR_BGR2GRAY)
+
     # Finds sherd contours in binary image
-    [temp_contours, hierarchy] = cv.findContours(BW, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
+    [temp_contours, hierarchy] = cv.findContours(combine, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
 
     # Sort contours
     temp_contours = sorted(temp_contours, key=cv.contourArea, reverse=True)
 
     # Filter Contour list 
-    contours = [cont for cont in temp_contours if
-                cv.contourArea(cont) > 100000 and (cv.contourArea(cont) < 4700000.0 or cv.contourArea(cont) > 6000000)]
-
-    # The measurement scale card
-    card = None
-
-    # The contours of the sherds
-    final_contours = []
-
-    for i in range(len(contours)):
-        temp_area = cv.contourArea(contours[i])
-        # TEST LOGS
-        # print(str(i) + " - Contour Area: ", temp_area)
-
-        if 920000.0 > temp_area > 900000.0:
-            card = contours[i]
-        else:
-            final_contours.append(contours[i])
+    final_contours = [cont for cont in temp_contours if
+                      cv.contourArea(cont) > 100000 and (
+                                  cv.contourArea(cont) < 4700000.0 or cv.contourArea(cont) > 6000000)]
 
     # TEST LOGS
     # print("Contours: ", len(final_contours))
@@ -290,7 +312,7 @@ for fileIndex in range(len(Files)):
         [dp_threshold, DPBW] = cv.threshold(cv.cvtColor(dp, cv.COLOR_BGR2GRAY), 15, 255, cv.THRESH_BINARY)
 
         # Finds depth contour.
-        [dp_temp_contours, dp_hierarchy] = cv.findContours(DPBW, cv.RETR_CCOMP, cv.CHAIN_APPROX_NONE)
+        [dp_temp_contours, dp_hierarchy] = cv.findContours(DPBW, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
 
         # Sort contours
         dp_temp_contours = sorted(dp_temp_contours, key=cv.contourArea, reverse=True)
