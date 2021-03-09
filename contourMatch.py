@@ -91,17 +91,19 @@ def crop(img, contours, dir="", name=" ", end="", num=-1):
     new_img = img[y:y + h, x:x + w]
 
     if name != " ":
-        if ending:
-            cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num + 1)}_{end}.png', new_img)
+        # Creates the directory for the Sherd
+        if not os.path.exists(f'output/{dir}_{num}'):
+            os.mkdir(f'output/{dir}_{num}')
+
+        if end:
+            cv.imwrite(f'output/{dir}_{num}/{end}.png', new_img)
         else:
-            cv.imwrite(f'output/{dir}/SCAN{dir}_{str(num + 1)}.png', new_img)
+            cv.imwrite(f'output/{dir}_{num}/rgb.png', new_img)
     else:
         (x, y), (Ma, ma), angle = cv.fitEllipse(contours)
         theta = angle - 90
         new_img = rotate_image(new_img, theta)
 
-        # TEST LOG
-        # print(f'Card Angle: {angle} ')
     return new_img
 
 
@@ -158,10 +160,6 @@ for fileIndex in range(len(Files)):
 
     sherd_id = get_id.findall(Files[fileIndex])[0]
     sherd_id = sherd_id.lstrip('0')
-
-    # Creates the directory for the Sherd
-    if not os.path.exists(f'output/{sherd_id}'):
-        os.mkdir(f'output/{sherd_id}')
 
     input_file = f'rgb/{Files[fileIndex]}'
 
@@ -329,11 +327,16 @@ for fileIndex in range(len(Files)):
         card_img = crop(rot_img, card)
 
         # Save the corresponding depth image to the Sherd's directory
-        cv.imwrite(f'output/{sherd_id}/{results[r][1]}', result_img_dp)
+        cv.imwrite(f'output/{sherd_id}_{r}/depth.png', result_img_dp)
 
         # Creates Final result image
-        final_img = create_result(result_img_rgb, result_img_dp, card_img)
-        save_file = f'output/{sherd_id}/{Files[fileIndex]}_{str(r)}_.png'
+        final_img = create_result(result_img_rgb, card_img)
+
+        if ending:
+            save_file = f'output/{sherd_id}_{r}/card_{ending}.png'
+        else:
+            save_file = f'output/{sherd_id}_{r}/card.png'
+
         cv.imwrite(save_file, final_img)
         # -------------------------------------------------------------------------------
 
