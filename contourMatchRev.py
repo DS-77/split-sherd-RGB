@@ -38,11 +38,11 @@ def contour_match(rbg_contours, depth_contours):
             temp.append((sim, depth_contours[d][1], depth_contours[d][0], d))
 
         # Maps the rgb to the depth mask with the lowest similarity
-        dp_ob = min(temp, key=first_agr)
-        c_results.append((j, dp_ob[1], dp_ob[0], dp_ob[2]))
-
-        # Deletes depth values that have already been assigned
-        del depth_contours[dp_ob[3]]
+        if temp:
+            dp_ob = min(temp, key=first_agr)
+            c_results.append((j, dp_ob[1], dp_ob[0], dp_ob[2]))
+            # Deletes depth values that have already been assigned
+            del depth_contours[dp_ob[3]]
 
     return c_results
 

@@ -38,17 +38,17 @@ def contour_match(rbg_contours, depth_contours):
     for j in rbg_contours:
         temp = []
 
-        for d in depth_contours:
-            sim = cv.matchShapes(j, d[0], cv.CONTOURS_MATCH_I3, 0)
-            temp.append((sim, d[1], d[0]))
+        for d in range(len(depth_contours)):
+            sim = cv.matchShapes(j, depth_contours[d][0], cv.CONTOURS_MATCH_I3, 0)
+            temp.append((sim, depth_contours[d][1], depth_contours[d][0], d))
 
-        dp_ob = min(temp, key=first_agr)
-        # TEST LOG
-        # print("Min Similarity: ", dp_ob[0])
-        c_results.append((j, dp_ob[1], dp_ob[0], dp_ob[2]))
+        if temp:
+            dp_ob = min(temp, key=first_agr)
+            c_results.append((j, dp_ob[1], dp_ob[0], dp_ob[2]))
 
-    # return results
-    # print("Result: ", len(c_results))
+            # Deletes depth values that have already been assigned
+            del depth_contours[dp_ob[3]]
+
     return c_results
 
 
