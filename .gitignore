@@ -5,5 +5,6 @@ Misc Files/
 .gitignore
 __pycache__
 test.py
+maskMaker.py
 .idea
 .DS_Store

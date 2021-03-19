@@ -1,6 +1,7 @@
 """
     This module is designed to split the images of multiple sherds into single images using the
-    RGB and depth image of each sherd. This method is based on contour based shape matching.
+    RGB and depth image of each sherd. This method is based on contour based shape matching. This approach
+    prioritizes matching the RGB and Depth image from the RGB.
 """
 import os
 import math
@@ -38,7 +39,7 @@ def contour_match(rbg_contours, depth_contours):
         temp = []
 
         for d in depth_contours:
-            sim = cv.matchShapes(j, d[0], cv.CONTOURS_MATCH_I1, 0)
+            sim = cv.matchShapes(j, d[0], cv.CONTOURS_MATCH_I3, 0)
             temp.append((sim, d[1], d[0]))
 
         dp_ob = min(temp, key=first_agr)
@@ -92,13 +93,16 @@ def crop(img, contours, dir="", name=" ", end="", num=-1):
 
     if name != " ":
         # Creates the directory for the Sherd
-        if not os.path.exists(f'output/{dir}_{num}'):
-            os.mkdir(f'output/{dir}_{num}')
-
         if end:
-            cv.imwrite(f'output/{dir}_{num}/{end}.png', new_img)
+            if not os.path.exists(f'output/{name.split(".")[0][:-4]}-{num+1}'):
+                os.mkdir(f'output/{name.split(".")[0][:-4]}-{num+1}')
+
+            cv.imwrite(f'output/{name.split(".")[0][:-4]}-{num+1}/{end}.png', new_img)
         else:
-            cv.imwrite(f'output/{dir}_{num}/rgb.png', new_img)
+            if not os.path.exists(f'output/{name.split(".")[0]}-{num+1}'):
+                os.mkdir(f'output/{name.split(".")[0]}-{num+1}')
+
+            cv.imwrite(f'output/{name.split(".")[0]}-{num+1}/{name.split(".")[0]}.png', new_img)
     else:
         (x, y), (Ma, ma), angle = cv.fitEllipse(contours)
         theta = angle - 90
@@ -159,7 +163,7 @@ for fileIndex in range(len(Files)):
         ending = 'int'
 
     sherd_id = get_id.findall(Files[fileIndex])[0]
-    sherd_id = sherd_id.lstrip('0')
+    # sherd_id = sherd_id.lstrip('0')
 
     input_file = f'rgb/{Files[fileIndex]}'
 
@@ -327,15 +331,18 @@ for fileIndex in range(len(Files)):
         card_img = crop(rot_img, card)
 
         # Save the corresponding depth image to the Sherd's directory
-        cv.imwrite(f'output/{sherd_id}_{r}/depth.png', result_img_dp)
+        if ending:
+            cv.imwrite(f'output/{Files[fileIndex].split(".")[0][:-4]}-{r+1}/depth.png', result_img_dp)
+        else:
+            cv.imwrite(f'output/{Files[fileIndex].split(".")[0]}-{r+1}/depth.png', result_img_dp)
 
         # Creates Final result image
         final_img = create_result(result_img_rgb, card_img)
 
         if ending:
-            save_file = f'output/{sherd_id}_{r}/card_{ending}.png'
+            save_file = f'output/{Files[fileIndex].split(".")[0][:-4]}-{r+1}/card_{ending}.png'
         else:
-            save_file = f'output/{sherd_id}_{r}/card.png'
+            save_file = f'output/{Files[fileIndex].split(".")[0]}-{r+1}/card.png'
 
         cv.imwrite(save_file, final_img)
         # -------------------------------------------------------------------------------
