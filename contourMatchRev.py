@@ -11,6 +11,22 @@ import cv2 as cv
 import numpy as np
 
 
+def resize_img(img):
+    """
+    This method downsizes the image.
+    Args:
+        img: An image.
+
+    Returns: resized image.
+
+    """
+
+    scale = 20
+    dim = (int(img.shape[1] * scale / 100), int(img.shape[0] * scale / 100))
+    n_img = cv.resize(img, dim, interpolation=cv.INTER_LINEAR)
+
+    return n_img
+
 def first_agr(tup):
     """
     This function returns the first element in the given tuple.
@@ -162,6 +178,7 @@ def find_square(cnt):
         if len(approx) == 4:
             return cnt
 
+
 def process_depth(out_dir, mask, name):
     """
     This method detects the contours in the depth image
@@ -214,9 +231,8 @@ def splitRGB(filename, in_dir, out_dir):
         return
 
     # Reads the image
-    A = imutils.resize(cv.imread(input_file), width=1000)
-
-    A = cv.rotate(A, cv.ROTATE_180) if 'SCAN' in filename else cv.imread(input_file)
+    A = cv.rotate(resize_img(cv.imread(input_file)), cv.ROTATE_180) if 'SCAN' in filename \
+        else resize_img(cv.imread(input_file))
 
     # Adding Gaussian Blur
     # blur_img = cv.GaussianBlur(A, (31, 31), 0) <-- Default for large images
@@ -272,8 +288,8 @@ def splitRGB(filename, in_dir, out_dir):
 
         # Print Result -----------------------------------------------------------------
         # Retrieves a fresh copy of the RGB image for cropping
-        some_img = cv.rotate(imutils.resize(cv.imread(input_file), width=1000), cv.ROTATE_180) if 'SCAN' in input_file \
-            else imutils.resize(cv.imread(input_file), width=1000)
+        some_img = cv.rotate(resize_img(cv.imread(input_file)), cv.ROTATE_180) if 'SCAN' in input_file \
+            else resize_img(cv.imread(input_file))
 
         # Retrieves the angle need to rotate the RGB image
         (_, _), (_, _), d_angle = cv.fitEllipse(results[r][3])
