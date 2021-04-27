@@ -6,7 +6,6 @@
 import math
 import os
 import re
-import imutils
 import cv2 as cv
 import numpy as np
 
