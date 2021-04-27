@@ -125,8 +125,8 @@ def crop(img, contours, dir="", name=" ", end="", num=-1):
             cv.imwrite(f'{dir}/{name}/{name}.png', new_img)
     else:
         (_, _), (_, _), angle = cv.fitEllipse(contours)
-        theta = angle - 90
-        new_img = rotate_image(new_img, theta)
+        theta = 0 - int(angle)
+        new_img = cv.rotate(new_img, theta, new_img)
 
     return new_img
 
@@ -292,13 +292,14 @@ def splitRGB(filename, in_dir, out_dir):
             else resize_img(cv.imread(input_file))
 
         # Retrieves the angle need to rotate the RGB image
-        (_, _), (_, _), d_angle = cv.fitEllipse(results[r][3])
-        (_, _), (_, _), rgb_angle = cv.fitEllipse(results[r][0])
-        theta = rgb_angle - d_angle
+        (_, _), (_, _), d_angle = cv.minAreaRect(results[r][3])
+        (_, _), (_, _), rgb_angle = cv.minAreaRect(results[r][0])
+        # theta = rgb_angle - d_angle
+        theta = int(rgb_angle + (rgb_angle - d_angle))
 
         # Retrieves the cropped image of the Sherd
         result_img_rgb = crop(some_img, results[r][0], out_dir, results[r][1], ending, num=r)
-        result_img_rgb = rotate_image(result_img_rgb, theta)
+        result_img_rgb = cv.rotate(result_img_rgb, theta, result_img_rgb)
         card_img = crop(some_img, card)
 
         # Creates Final result image
