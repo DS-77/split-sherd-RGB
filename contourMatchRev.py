@@ -26,6 +26,7 @@ def resize_img(img):
 
     return n_img
 
+
 def first_agr(tup):
     """
     This function returns the first element in the given tuple.
@@ -123,9 +124,17 @@ def crop(img, contours, dir="", name=" ", end="", num=-1):
         else:
             cv.imwrite(f'{dir}/{name}/{name}.png', new_img)
     else:
-        (_, _), (_, _), angle = cv.fitEllipse(contours)
-        theta = 0 - int(angle)
+        (_, _), (_, _), angle = cv.minAreaRect(contours)
+        theta = 0
+        if angle < 3:
+            theta = -93
+        elif angle > 80:
+            theta = int(angle) - 5
+
         new_img = cv.rotate(new_img, theta, new_img)
+
+        print(f'Card Angle: {angle}')
+        print(f'Theta: {theta}')
 
     return new_img
 
@@ -291,10 +300,11 @@ def splitRGB(filename, in_dir, out_dir):
             else resize_img(cv.imread(input_file))
 
         # Retrieves the angle need to rotate the RGB image
-        (_, _), (_, _), d_angle = cv.minAreaRect(results[r][3])
-        (_, _), (_, _), rgb_angle = cv.minAreaRect(results[r][0])
+        # (_, _), (_, _), d_angle = cv.minAreaRect(results[r][3])
+        # (_, _), (_, _), rgb_angle = cv.minAreaRect(results[r][0])
         # theta = rgb_angle - d_angle
-        theta = int(rgb_angle + (rgb_angle - d_angle))
+        # theta = int(rgb_angle + (rgb_angle - d_angle))
+        theta = 0
 
         # Retrieves the cropped image of the Sherd
         result_img_rgb = crop(some_img, results[r][0], out_dir, results[r][1], ending, num=r)
