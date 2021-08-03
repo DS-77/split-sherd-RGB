@@ -1,7 +1,7 @@
 """
     This module is designed to split the images of multiple sherds into single images using the
-    RGB and depth image of each sherd. This method is based on contour based shape matching. This approach
-    prioritizes matching the RGB and Depth image from the Depth mask.
+    RGB and depth image of each sherd. This method is derived from contour based shape matching. This approach
+    prioritizes matching RGB and Depth images from generated Depth masks.
 """
 import math
 import os
@@ -132,10 +132,6 @@ def crop(img, contours, dir="", name=" ", end="", num=-1):
             theta = int(angle) - 5
 
         new_img = cv.rotate(new_img, theta, new_img)
-
-        print(f'Card Angle: {angle}')
-        print(f'Theta: {theta}')
-
     return new_img
 
 
@@ -231,11 +227,18 @@ def splitRGB(filename, in_dir, out_dir):
     # Retrieves depth mask from subdirectories
     temp_folders = os.listdir(out_dir)
 
-    name = filename.split('.')[0][: -4] if ending else filename.split('.')[0]
+    # Retrieves filename and sherd ID.
+    # scan_name = filename.split('.')[0][: -4] if ending else filename.split('.')[0]
+    scan_name = filename.split('_')[0]
+    temp_id = filename.split('_')[2]
+    scan_id = temp_id.split('.')[0]
 
-    mask_folder = tuple(i for i in temp_folders if name in i)
+    print(f'Looking for ID: {scan_id}')
 
-    if len(mask_folder) <= 0:
+    mask_folder = tuple(i for i in temp_folders if scan_id in i)
+
+    if len(mask_folder) <= 0 or len(mask_folder) == 1:
+        print(f'No splitting necessary. There is {len(mask_folder)} sherds to split.')
         return
 
     # Reads the image
@@ -315,9 +318,10 @@ def splitRGB(filename, in_dir, out_dir):
         final_img = create_result(result_img_rgb, card_img)
 
         if ending:
-            save_file = f'{out_dir}/{results[r][1]}/card_{ending}.png'
+            save_file = f'{out_dir}/{results[r][1]}/{scan_name}_card_{ending}.png'
         else:
-            save_file = f'{out_dir}/{results[r][1]}/card.png'
+            save_file = f'{out_dir}/{results[r][1]}/{scan_name}_card.png'
 
+        print(f'Saving {save_file}')
         cv.imwrite(save_file, final_img)
         # -------------------------------------------------------------------------------
