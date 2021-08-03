@@ -230,7 +230,7 @@ def splitRGB(filename, in_dir, out_dir):
     # Retrieves filename and sherd ID.
     # scan_name = filename.split('.')[0][: -4] if ending else filename.split('.')[0]
     scan_name = filename.split('_')[0]
-    temp_id = filename.split('_')[2]
+    temp_id = filename.split('_')[2] if ending else filename.split('_')[1]
     scan_id = temp_id.split('.')[0]
 
     print(f'Looking for ID: {scan_id}')
