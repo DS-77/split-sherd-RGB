@@ -2,8 +2,8 @@
     This module is designed to split the images of multiple sherds into single images using the
     RGB and depth image of each sherd. This method is derived from contour based shape matching. This approach
     prioritizes matching RGB and Depth images from generated Depth masks.
-    Version: 1.0.0
-    Last Edit: 22-11-21
+    Version: 1.0.1
+    Last Edit: 26-11-21
 """
 import math
 import os
@@ -237,15 +237,20 @@ def splitRGB(filename, in_dir, out_dir):
 
     print(f'Looking for ID: {scan_id}')
 
-    mask_folder = tuple(i for i in temp_folders if scan_id in i)
-
-    if len(mask_folder) <= 0 or len(mask_folder) == 1:
-        print(f'No splitting necessary. There is {len(mask_folder)} sherds to split.')
-        return
-
     # Reads the image
     A = cv.rotate(resize_img(cv.imread(input_file)), cv.ROTATE_180) if 'SCAN' in filename \
         else resize_img(cv.imread(input_file))
+
+    mask_folder = tuple(i for i in temp_folders if scan_id in i)
+
+    if len(mask_folder) <= 0 or len(mask_folder) == 1:
+        # If there are no sherds to split or only one sherd to split, copy the original RGB to output directory.
+        print(f'No splitting necessary. There is {len(mask_folder)} sherds to split.')
+
+        save_file = f'{out_dir}/{scan_id}-1/{scan_name}_card_{ending}.png'
+        print(f'Copying...{scan_name}')
+        cv.imwrite(save_file, A)
+        return
 
     # Adding Gaussian Blur
     # blur_img = cv.GaussianBlur(A, (31, 31), 0) <-- Default for large images
