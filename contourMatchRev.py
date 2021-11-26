@@ -2,6 +2,8 @@
     This module is designed to split the images of multiple sherds into single images using the
     RGB and depth image of each sherd. This method is derived from contour based shape matching. This approach
     prioritizes matching RGB and Depth images from generated Depth masks.
+    Version: 1.0.0
+    Last Edit: 22-11-21
 """
 import math
 import os
