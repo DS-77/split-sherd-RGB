@@ -1,10 +1,16 @@
 depth/
 rgb/
+rgb_mod/
 output/
 Misc Files/
+out/
 .gitignore
 __pycache__
 test.py
 maskMaker.py
+contourMatchRev_org.py
+.contourMatchRev.py.swp
+contourMatchRev.py.zip
+resize_images.py
 .idea
 .DS_Store
